@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { useClerk } from '@clerk/nextjs';
 import Header from '@/components/Header';
 import { LOCATIONS, getCityForLocation } from '@/lib/constants';
 
@@ -13,10 +11,7 @@ export default function SettingsPage() {
   const [email, setEmail] = useState('');
   const [joinedAt, setJoinedAt] = useState('');
   const [isPending, startTransition] = useTransition();
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [saved, setSaved] = useState(false);
-  const router = useRouter();
-  const { signOut } = useClerk();
 
   useEffect(() => {
     fetch('/api/user')
@@ -71,15 +66,6 @@ export default function SettingsPage() {
     });
   }
 
-  async function handleDeleteAccount() {
-    startTransition(async () => {
-      const res = await fetch('/api/user', { method: 'DELETE' });
-      if (res.ok) {
-        await signOut();
-        router.push('/');
-      }
-    });
-  }
 
   const locationChanged =
     (university || city) !== currentLocation && (university || city) !== '';
@@ -185,57 +171,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Danger zone */}
-          <div className="settings-section" style={{ borderBottom: 'none' }}>
-            <div className="settings-label" style={{ color: '#cc3333' }}>
-              danger zone
-            </div>
-            <p className="settings-hint">
-              this permanently deletes your account, all your posts, and all
-              your felt reactions. this cannot be undone.
-            </p>
 
-            {!deleteConfirm ? (
-              <button
-                className="btn-ghost"
-                onClick={() => setDeleteConfirm(true)}
-                style={{
-                  marginTop: '1rem',
-                  borderColor: '#cc3333',
-                  color: '#cc3333',
-                }}
-              >
-                delete my account
-              </button>
-            ) : (
-              <div
-                style={{
-                  marginTop: '1rem',
-                  display: 'flex',
-                  gap: '0.75rem',
-                  alignItems: 'center',
-                }}
-              >
-                <button
-                  className="btn-primary"
-                  onClick={handleDeleteAccount}
-                  disabled={isPending}
-                  style={{
-                    background: '#cc3333',
-                    borderColor: '#cc3333',
-                  }}
-                >
-                  {isPending ? '...' : 'yes, delete everything'}
-                </button>
-                <button
-                  className="btn-ghost"
-                  onClick={() => setDeleteConfirm(false)}
-                >
-                  cancel
-                </button>
-              </div>
-            )}
-          </div>
         </div>
         <div />
       </div>

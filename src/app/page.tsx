@@ -1,65 +1,127 @@
-import Image from "next/image";
+import Link from 'next/link';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { prisma } from '@/lib/prisma';
 
-export default function Home() {
+async function getStats() {
+  const now = new Date();
+  const tonightStart = new Date(now);
+  tonightStart.setHours(0, 0, 0, 0);
+
+  const [totalTonight, samplePosts] = await Promise.all([
+    prisma.post.count({
+      where: {
+        expiresAt: { gt: now },
+        createdAt: { gte: tonightStart },
+      },
+    }),
+    prisma.post.findMany({
+      where: { expiresAt: { gt: now } },
+      orderBy: { feltCount: 'desc' },
+      take: 3,
+      select: {
+        content: true,
+        city: true,
+        feltCount: true,
+      },
+    }),
+  ]);
+
+  return { totalTonight, samplePosts };
+}
+
+export default async function LandingPage() {
+  const { userId } = await auth();
+  if (userId) redirect('/feed');
+
+  const { totalTonight, samplePosts } = await getStats();
+
+  const displayPosts =
+    samplePosts.length > 0
+      ? samplePosts
+      : [
+          {
+            content:
+              'i got the internship everyone wanted and i feel absolutely nothing.',
+            city: 'Bengaluru',
+            feltCount: 47,
+          },
+          {
+            content:
+              'she said i love you on tuesday and blocked me on friday.',
+            city: 'Delhi',
+            feltCount: 112,
+          },
+          {
+            content:
+              'the group chat has 47 people and i have never felt more alone.',
+            city: 'Mumbai',
+            feltCount: 89,
+          },
+        ];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="page-wrapper">
+      {/* Header — full width */}
+      <header className="header">
+        <span className="logo">unsaid</span>
+        <Link
+          href="/sign-in"
+          className="btn-ghost"
+          style={{ padding: '0.4rem 1.25rem', fontSize: '0.7rem' }}
+        >
+          sign in
+        </Link>
+      </header>
+
+      {/* Hero — centered, full viewport */}
+      <section className="landing-hero">
+        <h1 className="hero-title">
+          say the
+          <br />
+          thing you
+          <br />
+          didn&apos;t.
+        </h1>
+        <p className="hero-subtitle">
+          anonymous. honest. gone in 48 hours. no profile. no history. just the
+          truth.
+        </p>
+        <Link href="/sign-up" className="btn-ghost">
+          start writing. it&apos;s anonymous.
+        </Link>
+      </section>
+
+      {/* Stats — full-width band, two cells side by side */}
+      <div className="stats-band">
+        <div className="stat-cell">
+          <span className="stat-number">
+            {totalTonight > 0 ? totalTonight.toLocaleString() : '—'}
+          </span>
+          <span className="stat-label">things said tonight across India</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="stat-cell">
+          <span className="stat-number">48h</span>
+          <span className="stat-label">then it disappears. forever.</span>
         </div>
-      </main>
+      </div>
+
+      {/* From tonight — 3-column grid */}
+      <div className="from-tonight">
+        <div className="from-tonight-label">from tonight</div>
+        <div className="sample-posts-grid">
+          {displayPosts.map((post, i) => (
+            <div key={i} className="sample-post">
+              <div className="sample-post-text">
+                &ldquo;{post.content}&rdquo;
+              </div>
+              <div className="sample-post-meta">
+                {post.city} · {post.feltCount} felt this
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

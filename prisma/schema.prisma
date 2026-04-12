@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  city      String?
+  createdAt DateTime @default(now())
+
+  posts    Post[]
+  feltThis FeltThis[]
+
+  @@index([clerkId])
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  content   String   @db.VarChar(280)
+  city      String
+  feltCount Int      @default(0)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  feltThis FeltThis[]
+
+  @@index([city, createdAt(sort: Desc)])
+  @@index([feltCount(sort: Desc)])
+  @@index([expiresAt])
+}
+
+model FeltThis {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId])
+  @@index([userId])
+}

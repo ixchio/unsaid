@@ -22,14 +22,29 @@ export default function VerifyPage() {
     if (!finalLocation) return;
 
     startTransition(async () => {
+      let fingerprint = '';
+      try {
+        const fpPromise = import('@fingerprintjs/fingerprintjs').then(FingerprintJS => FingerprintJS.load());
+        const fp = await fpPromise;
+        const result = await fp.get();
+        fingerprint = result.visitorId;
+      } catch (err) {
+        console.warn('Fingerprinting failed', err);
+      }
+
       const res = await fetch('/api/user/city', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ city: finalLocation }),
+        body: JSON.stringify({ city: finalLocation, fingerprint }),
       });
 
       if (res.ok) {
         router.push('/feed');
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        if (errorData.error) {
+           alert(errorData.error);
+        }
       }
     });
   }

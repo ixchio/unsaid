@@ -644,3 +644,8 @@ export function getCityForLocation(location: string): string {
 export const FELT_THIS_THRESHOLD = 50;
 export const POST_MAX_LENGTH = 280;
 export const POST_LIFETIME_HOURS = 48;
+
+// ── Anti-spam limits ──
+export const DAILY_POST_LIMIT = 10;              // max posts per device per day
+export const CITY_SWITCH_COOLDOWN_HOURS = 12;     // hours between location changes
+export const FELT_HOURLY_LIMIT = 50;              // max felt-this reactions per hour

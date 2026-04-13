@@ -1,26 +1,62 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
+import { getOrCreateUser } from '@/lib/auth';
 import { getAblyServer } from '@/lib/ably';
+import { FELT_HOURLY_LIMIT } from '@/lib/constants';
+import arcjet, { detectBot, tokenBucket } from '@arcjet/next';
+
+const aj = arcjet({
+  key: process.env.ARCJET_KEY || "dummy-key-for-builds",
+  characteristics: ['ip.src'],
+  rules: [
+    detectBot({
+      mode: "LIVE",
+      allow: ["CATEGORY:SEARCH_ENGINE"],
+    }),
+    tokenBucket({
+      mode: "LIVE",
+      refillRate: 10,  // 10 requests per minute
+      interval: 60,
+      capacity: 20,    // short burst allowed
+    }),
+  ],
+});
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const req = request as any;
+  const decision = await aj.protect(req, { requested: 1 });
+
+  if (decision.isDenied()) {
+    return NextResponse.json({ error: 'Too Many Requests or Bot Detected' }, { status: 429 });
+  }
+
+  const user = await getOrCreateUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Session not found' }, { status: 401 });
+  }
+
+  // ── Database Hourly Rate Limit ──
+  const oneHourAgo = new Date();
+  oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+
+  const recentFeltCount = await prisma.feltThis.count({
+    where: {
+      userId: user.id,
+      createdAt: { gte: oneHourAgo }
+    }
+  });
+
+  if (recentFeltCount >= FELT_HOURLY_LIMIT) {
+    return NextResponse.json(
+      { error: `You've reached your limit of ${FELT_HOURLY_LIMIT} reactions per hour.` },
+      { status: 429 }
+    );
   }
 
   const { id: postId } = await params;
-
-  const user = await prisma.user.findUnique({
-    where: { clerkId: userId },
-  });
-
-  if (!user) {
-    return NextResponse.json({ error: 'User not found' }, { status: 404 });
-  }
 
   // Check if post exists and is not expired
   const post = await prisma.post.findUnique({

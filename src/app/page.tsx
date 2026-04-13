@@ -1,7 +1,9 @@
 import Link from 'next/link';
-import { auth } from '@clerk/nextjs/server';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+
+const COOKIE_NAME = 'unsaid_id';
 
 async function getStats() {
   const now = new Date();
@@ -31,8 +33,18 @@ async function getStats() {
 }
 
 export default async function LandingPage() {
-  const { userId } = await auth();
-  if (userId) redirect('/feed');
+  // If user already has a cookie and has picked a city, send them to feed
+  const cookieStore = await cookies();
+  const deviceId = cookieStore.get(COOKIE_NAME)?.value;
+
+  if (deviceId) {
+    const user = await prisma.user.findUnique({
+      where: { deviceId },
+      select: { city: true },
+    });
+    if (user?.city) redirect('/feed');
+    // Has cookie but no city → show landing, they'll go to /verify
+  }
 
   const { totalTonight, samplePosts } = await getStats();
 
@@ -65,13 +77,6 @@ export default async function LandingPage() {
       {/* Header — full width */}
       <header className="header">
         <span className="logo">unsaid</span>
-        <Link
-          href="/sign-in"
-          className="btn-ghost"
-          style={{ padding: '0.4rem 1.25rem', fontSize: '0.7rem' }}
-        >
-          sign in
-        </Link>
       </header>
 
       {/* Hero — centered, full viewport */}
@@ -87,7 +92,7 @@ export default async function LandingPage() {
           anonymous. honest. gone in 48 hours. no profile. no history. just the
           truth.
         </p>
-        <Link href="/sign-up" className="btn-ghost">
+        <Link href="/verify" className="btn-ghost">
           start writing. it&apos;s anonymous.
         </Link>
       </section>

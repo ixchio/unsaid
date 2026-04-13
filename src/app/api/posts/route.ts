@@ -1,23 +1,61 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
-import { POST_MAX_LENGTH, POST_LIFETIME_HOURS, getCityForLocation, LOCATIONS } from '@/lib/constants';
+import { getOrCreateUser } from '@/lib/auth';
+import { POST_MAX_LENGTH, POST_LIFETIME_HOURS, getCityForLocation, LOCATIONS, DAILY_POST_LIMIT } from '@/lib/constants';
+import arcjet, { detectBot, tokenBucket } from '@arcjet/next';
+
+const aj = arcjet({
+  key: process.env.ARCJET_KEY || "dummy-key-for-builds",
+  characteristics: ['ip.src'],
+  rules: [
+    detectBot({
+      mode: "LIVE",
+      allow: ["CATEGORY:SEARCH_ENGINE"],
+    }),
+    tokenBucket({
+      mode: "LIVE",
+      refillRate: 15, // 15 requests per minute
+      interval: 60,
+      capacity: 30,   // let them read the feed and post occasionally
+    }),
+  ],
+});
 
 export async function POST(request: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const req = request as any;
+  const decision = await aj.protect(req, { requested: 1 });
+
+  if (decision.isDenied()) {
+    return NextResponse.json({ error: 'Too Many Requests or Bot Detected' }, { status: 429 });
   }
 
-  // Get DB user
-  const user = await prisma.user.findUnique({
-    where: { clerkId: userId },
-  });
+  const user = await getOrCreateUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Session not found' }, { status: 401 });
+  }
 
-  if (!user || !user.city) {
+  if (!user.city) {
     return NextResponse.json(
       { error: 'Please select a city first' },
       { status: 400 }
+    );
+  }
+
+  // ── Database Daily Rate Limit ──
+  const yesterday = new Date();
+  yesterday.setHours(yesterday.getHours() - 24);
+
+  const recentPostsCount = await prisma.post.count({
+    where: {
+      authorId: user.id,
+      createdAt: { gte: yesterday }
+    }
+  });
+
+  if (recentPostsCount >= DAILY_POST_LIMIT) {
+    return NextResponse.json(
+      { error: `You've reached your daily limit of ${DAILY_POST_LIMIT} posts.` },
+      { status: 429 }
     );
   }
 
@@ -54,16 +92,12 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const user = await getOrCreateUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Session not found' }, { status: 401 });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { clerkId: userId },
-  });
-
-  if (!user || !user.city) {
+  if (!user.city) {
     return NextResponse.json({ posts: [], national: [], trending: [] });
   }
 
@@ -143,4 +177,3 @@ export async function GET() {
     cityLabel: parentCity,
   });
 }
-

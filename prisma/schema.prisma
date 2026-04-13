@@ -8,15 +8,18 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  clerkId   String   @unique
-  city      String?
-  createdAt DateTime @default(now())
+  id            String    @id @default(cuid())
+  deviceId      String    @unique
+  fingerprint   String?
+  city          String?
+  cityChangedAt DateTime?
+  createdAt     DateTime  @default(now())
 
   posts    Post[]
   feltThis FeltThis[]
 
-  @@index([clerkId])
+  @@index([deviceId])
+  @@index([fingerprint])
 }
 
 model Post {

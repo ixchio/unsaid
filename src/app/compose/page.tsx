@@ -6,7 +6,7 @@ export default async function ComposePage() {
   const user = await getOrCreateUser();
 
   if (!user) {
-    redirect('/sign-in');
+    redirect('/verify');
   }
 
   if (!user.city) {

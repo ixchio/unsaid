@@ -8,8 +8,6 @@ export default function SettingsPage() {
   const [currentLocation, setCurrentLocation] = useState('');
   const [city, setCity] = useState('');
   const [university, setUniversity] = useState('');
-  const [email, setEmail] = useState('');
-  const [joinedAt, setJoinedAt] = useState('');
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
 
@@ -24,16 +22,6 @@ export default function SettingsPage() {
           if (data.city !== parentCity) {
             setUniversity(data.city);
           }
-        }
-        if (data.email) setEmail(data.email);
-        if (data.joinedAt) {
-          setJoinedAt(
-            new Date(data.joinedAt).toLocaleDateString('en-IN', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })
-          );
         }
       });
   }, []);
@@ -66,7 +54,6 @@ export default function SettingsPage() {
     });
   }
 
-
   const locationChanged =
     (university || city) !== currentLocation && (university || city) !== '';
 
@@ -79,19 +66,11 @@ export default function SettingsPage() {
         <div className="settings-main">
           <h1 className="settings-title">settings</h1>
 
-          {/* Account info */}
+          {/* Current location */}
           <div className="settings-section">
-            <div className="settings-label">account</div>
+            <div className="settings-label">your location</div>
             <div className="settings-row">
-              <span className="settings-row-label">email</span>
-              <span className="settings-row-value">{email || '—'}</span>
-            </div>
-            <div className="settings-row">
-              <span className="settings-row-label">joined</span>
-              <span className="settings-row-value">{joinedAt || '—'}</span>
-            </div>
-            <div className="settings-row">
-              <span className="settings-row-label">current location</span>
+              <span className="settings-row-label">current</span>
               <span className="settings-row-value">
                 {currentLocation || '—'}
               </span>
@@ -99,7 +78,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Change location */}
-          <div className="settings-section">
+          <div className="settings-section" style={{ borderBottom: 'none' }}>
             <div className="settings-label">update location</div>
             <p className="settings-hint">
               change your city or pick a university. your future posts will be
@@ -170,7 +149,6 @@ export default function SettingsPage() {
               )}
             </div>
           </div>
-
 
         </div>
         <div />

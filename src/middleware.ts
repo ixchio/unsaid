@@ -1,17 +1,26 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-  '/api/cleanup(.*)',
-]);
+const COOKIE_NAME = 'unsaid_id';
 
-export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
-    await auth.protect();
+export function middleware(request: NextRequest) {
+  const response = NextResponse.next();
+
+  // If no anonymous ID cookie exists, generate one
+  if (!request.cookies.get(COOKIE_NAME)) {
+    const deviceId = crypto.randomUUID();
+    response.cookies.set(COOKIE_NAME, deviceId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      // 1 year — effectively permanent for the device
+      maxAge: 60 * 60 * 24 * 365,
+    });
   }
-});
+
+  return response;
+}
 
 export const config = {
   matcher: [

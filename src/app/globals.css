@@ -1733,6 +1733,120 @@ button.header-icon {
   padding: 1rem 0;
 }
 
+/* ───── Post Detail Page ───── */
+.post-detail-page {
+  min-height: 100vh;
+}
+
+.post-detail-card {
+  max-width: 640px;
+  margin: 4rem auto;
+  padding: 2.5rem;
+  border: 1px solid var(--color-border);
+}
+
+.post-detail-content {
+  font-size: 1.25rem;
+  font-weight: 300;
+  line-height: 1.75;
+  letter-spacing: -0.005em;
+  margin-bottom: 1.5rem;
+  color: var(--color-text);
+}
+
+.post-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  flex-wrap: wrap;
+}
+
+.post-detail-cta {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem 2.5rem;
+  text-align: center;
+}
+
+.post-detail-cta p {
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: var(--color-muted);
+  margin-bottom: 1.5rem;
+}
+
+.post-detail-gone {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 6rem 2rem;
+  text-align: center;
+}
+
+.post-detail-gone-icon {
+  font-size: 3rem;
+  font-weight: 200;
+  color: var(--color-muted);
+  margin-bottom: 1rem;
+}
+
+.post-detail-gone h2 {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin-bottom: 0.75rem;
+}
+
+.post-detail-gone p {
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: var(--color-muted);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+/* ───── Verify Page ───── */
+.verify-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.verify-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+}
+
+.verify-subtitle {
+  font-size: 0.95rem;
+  font-weight: 300;
+  color: var(--color-muted);
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+  max-width: 400px;
+}
+
+/* ───── Compose extras ───── */
+.compose-offline-notice {
+  padding: 0.75rem 2.5rem;
+  font-size: 0.75rem;
+  font-weight: 300;
+  color: #f87171;
+  background: rgba(127, 29, 29, 0.08);
+  border-top: 1px solid rgba(127, 29, 29, 0.15);
+}
+
 /* ───── Mobile overrides ───── */
 @media (max-width: 640px) {
   .search-trigger-bar {

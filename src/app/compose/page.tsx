@@ -1,6 +1,13 @@
 import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
 import { getOrCreateUser } from '@/lib/auth';
 import ComposeClient from './ComposeClient';
+
+export const metadata: Metadata = {
+  title: 'drop something',
+  description: 'say the thing you didn\'t. anonymous. ephemeral. gone in 60 minutes.',
+  robots: { index: false, follow: false },
+};
 
 export default async function ComposePage() {
   const user = await getOrCreateUser();

@@ -1,7 +1,30 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
+import {
+  SITE_URL, SITE_NAME, SITE_TAGLINE, SITE_DESCRIPTION_LONG,
+  OG_DEFAULTS, TWITTER_DEFAULTS, KEYWORDS, canonicalUrl,
+} from '@/lib/seo';
+
+export const metadata: Metadata = {
+  title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+  description: SITE_DESCRIPTION_LONG,
+  keywords: [...KEYWORDS, 'college anonymous app', 'campus confessions', 'LPU confessions', 'anonymous social network'],
+  alternates: { canonical: canonicalUrl() },
+  openGraph: {
+    ...OG_DEFAULTS,
+    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION_LONG,
+    url: SITE_URL,
+  },
+  twitter: {
+    ...TWITTER_DEFAULTS,
+    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION_LONG,
+  },
+};
 
 const COOKIE_NAME = 'unsaid_id';
 

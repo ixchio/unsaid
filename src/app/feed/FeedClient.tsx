@@ -162,9 +162,6 @@ export default function FeedClient({ userCity }: { userCity: string }) {
     <div className="page-wrapper">
       <Header city={userCity} />
 
-      {/* Search bar */}
-      <SearchBar onSearch={handleSearch} currentZone={userCity} />
-
       {/* Dying posts alert banner */}
       <AnimatePresence>
         {dyingCount > 0 && !isSearching && (
@@ -184,6 +181,9 @@ export default function FeedClient({ userCity }: { userCity: string }) {
         <div className="feed-sidebar-left" />
 
         <div className="feed-main">
+          {/* Search inside feed column */}
+          <SearchBar onSearch={handleSearch} currentZone={userCity} />
+
           <ErrorBoundary>
             {loading ? (
               <div className="empty-state">

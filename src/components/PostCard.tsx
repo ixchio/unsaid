@@ -2,10 +2,11 @@
 
 import { motion } from 'framer-motion';
 import { useState, useEffect, useCallback } from 'react';
-import FeltButton from './FeltButton';
+import ReactionPicker from './ReactionPicker';
 import ReplyThread from './ReplyThread';
+import ShareButton from './ShareButton';
 import { timeLeft } from '@/lib/time';
-import { POST_START_LIFE_MINUTES } from '@/lib/constants';
+import { POST_START_LIFE_MINUTES, type ReactionType } from '@/lib/constants';
 
 export interface PostData {
   id: string;
@@ -16,6 +17,9 @@ export interface PostData {
   createdAt: string;
   expiresAt: string;
   hasFelt: boolean;
+  userReaction?: ReactionType | null;
+  reactionBreakdown?: Record<string, number>;
+  isOwn?: boolean;
 }
 
 interface PostCardProps {
@@ -36,7 +40,7 @@ export default function PostCard({ post, variant = 'light' }: PostCardProps) {
     return () => clearInterval(interval);
   }, [expiresAt]);
 
-  const handleFeltUpdate = useCallback((newCount: number, newExpiresAt?: string) => {
+  const handleReactionUpdate = useCallback((newCount: number, newExpiresAt?: string) => {
     if (newExpiresAt) {
       const oldTime = expiresAt.getTime();
       const newTime = new Date(newExpiresAt).getTime();
@@ -65,9 +69,13 @@ export default function PostCard({ post, variant = 'light' }: PostCardProps) {
   }, [expiresAt]);
 
   const now = Date.now();
+  const created = new Date(post.createdAt).getTime();
   const expires = expiresAt.getTime();
   const remaining = expires - now;
-  const pct = Math.max(0, Math.min(100, (remaining / (POST_START_LIFE_MINUTES * 60000)) * 100));
+  const totalLife = expires - created;
+  // use actual total life for bar, capped at reasonable max
+  const maxLife = Math.max(POST_START_LIFE_MINUTES * 60000, totalLife);
+  const pct = Math.max(0, Math.min(100, (remaining / maxLife) * 100));
 
   const isDying = remaining < 5 * 60 * 1000 && remaining > 0;
   const isDead = remaining <= 0;
@@ -88,77 +96,50 @@ export default function PostCard({ post, variant = 'light' }: PostCardProps) {
       layout
     >
       {/* Survival bar */}
-      <div
-        style={{
-          width: '100%',
-          height: 3,
-          background: variant === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-          marginBottom: '1rem',
-          borderRadius: 2,
-          overflow: 'hidden',
-        }}
-      >
+      <div className="survival-bar-track">
         <motion.div
-          style={{
-            height: '100%',
-            background: barColor,
-            borderRadius: 2,
-          }}
+          className="survival-bar-fill"
+          style={{ background: barColor }}
           initial={false}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
         />
       </div>
 
-      <div className="post-content">
-        {post.content}
-      </div>
+      <div className="post-content">{post.content}</div>
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          position: 'relative',
-        }}
-      >
+      <div className="post-bottom-row">
         <div className="post-meta">
           <span>{post.city}</span>
           <span className={isDying ? 'time-dying' : ''}>{timeRemaining}</span>
+          {post.isOwn && <span className="own-badge">you</span>}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', position: 'relative' }}>
+        <div className="post-actions">
           {showBonus && (
             <motion.span
               initial={{ opacity: 1, y: 0 }}
               animate={{ opacity: 0, y: -18 }}
               transition={{ duration: 1 }}
-              style={{
-                position: 'absolute',
-                top: -6,
-                right: 0,
-                fontSize: '0.65rem',
-                fontWeight: 600,
-                color: '#22c55e',
-                pointerEvents: 'none',
-                whiteSpace: 'nowrap',
-              }}
+              className="bonus-float"
             >
               {bonusText}
             </motion.span>
           )}
 
-          <FeltButton
+          <ShareButton postId={post.id} content={post.content} />
+
+          <ReactionPicker
             postId={post.id}
             initialCount={post.feltCount}
-            initialFelt={post.hasFelt}
+            initialReaction={post.userReaction || (post.hasFelt ? 'felt' : null)}
+            reactionBreakdown={post.reactionBreakdown}
             variant={variant}
-            onUpdate={handleFeltUpdate}
+            onUpdate={handleReactionUpdate}
           />
         </div>
       </div>
 
-      {/* Whisper replies */}
       <ReplyThread
         postId={post.id}
         replyCount={post.replyCount}

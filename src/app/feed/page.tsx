@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getOrCreateUser } from '@/lib/user';
+import { getOrCreateUser } from '@/lib/auth';
 import FeedClient from './FeedClient';
 
 export default async function FeedPage() {

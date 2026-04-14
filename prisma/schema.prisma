@@ -41,10 +41,13 @@ model Post {
   @@index([city, createdAt(sort: Desc)])
   @@index([feltCount(sort: Desc)])
   @@index([expiresAt])
+  @@index([authorId])
+  @@index([createdAt(sort: Desc)])
 }
 
 model FeltThis {
   id        String   @id @default(cuid())
+  type      String   @default("felt") // felt, dead, rage, pain, fire, real
   createdAt DateTime @default(now())
 
   postId String
@@ -55,6 +58,7 @@ model FeltThis {
 
   @@unique([postId, userId])
   @@index([userId])
+  @@index([postId])
 }
 
 model Reply {

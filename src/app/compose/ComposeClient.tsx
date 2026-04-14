@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { POST_MAX_LENGTH, POST_START_LIFE_MINUTES } from '@/lib/constants';
+import { trackMyPost } from '@/lib/notifications';
+import { isOnline, queuePost } from '@/lib/offline';
 
 const PROMPTS = [
   'that thing about your hostel nobody says...',
-  'the truth about today\'s lecture...',
+  "the truth about today's lecture...",
   'what really happened in the food court...',
   'the text you typed and deleted...',
   'what you wish your roommate knew...',
@@ -21,10 +23,21 @@ export default function ComposeClient() {
   const router = useRouter();
 
   const charCount = POST_MAX_LENGTH - content.length;
-  const placeholder = PROMPTS[Math.floor(Math.random() * PROMPTS.length)];
+  // fix: stable placeholder that doesn't re-randomize on every render
+  const placeholder = useMemo(
+    () => PROMPTS[Math.floor(Math.random() * PROMPTS.length)],
+    []
+  );
 
   async function handlePost() {
     if (!content.trim() || content.length > POST_MAX_LENGTH) return;
+
+    // offline support: queue the post if offline
+    if (!isOnline()) {
+      queuePost(content.trim());
+      router.push('/feed');
+      return;
+    }
 
     setError('');
     startTransition(async () => {
@@ -36,13 +49,21 @@ export default function ComposeClient() {
         });
 
         if (res.ok) {
+          const data = await res.json();
+          if (data.id) trackMyPost(data.id);
           router.push('/feed');
         } else {
           const data = await res.json();
           setError(data.error || 'Something went wrong');
         }
       } catch {
-        setError('Failed to post. Try again.');
+        // maybe went offline mid-request
+        if (!isOnline()) {
+          queuePost(content.trim());
+          router.push('/feed');
+        } else {
+          setError('Failed to post. Try again.');
+        }
       }
     });
   }
@@ -53,43 +74,20 @@ export default function ComposeClient() {
 
       <div className="compose-layout">
         <div />
-
         <div className="compose-main">
-          <div className="compose-prompt">
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: '#dc2626',
-                display: 'inline-block',
-                animation: 'textPulse 1s ease-in-out infinite',
-              }} />
-              this post gets {POST_START_LIFE_MINUTES} minutes. make it count.
-            </span>
-          </div>
+          <div className="compose-prompt">say it</div>
 
-          <div style={{ borderBottom: '1px solid var(--color-border)' }}>
-            <textarea
-              className="compose-textarea"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder={placeholder}
-              maxLength={POST_MAX_LENGTH + 10}
-              autoFocus
-            />
-          </div>
+          <textarea
+            className="compose-textarea"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder={placeholder}
+            maxLength={POST_MAX_LENGTH + 10}
+            autoFocus
+          />
 
           {error && (
-            <div
-              style={{
-                padding: '0.75rem 2.5rem',
-                fontSize: '0.8rem',
-                color: '#cc3333',
-              }}
-            >
-              {error}
-            </div>
+            <div className="compose-error">{error}</div>
           )}
 
           <div className="compose-footer">
@@ -138,6 +136,12 @@ export default function ComposeClient() {
               if it resonates — people keep it alive. if not — gone in {POST_START_LIFE_MINUTES}m.
             </span>
           </div>
+
+          {!isOnline() && (
+            <div className="compose-offline-notice">
+              you&apos;re offline. your post will be queued and sent when you reconnect.
+            </div>
+          )}
         </div>
 
         <div />

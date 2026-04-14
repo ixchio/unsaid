@@ -123,3 +123,19 @@ export const POST_MAX_LENGTH = 280;
 export const DAILY_POST_LIMIT = 15;
 export const CITY_SWITCH_COOLDOWN_HOURS = 12;
 export const FELT_HOURLY_LIMIT = 100;
+
+// ── Pagination ──
+export const FEED_PAGE_SIZE = 20;
+export const TRENDING_PAGE_SIZE = 10;
+
+// ── Reaction types ──
+export const REACTION_TYPES = [
+  { key: 'felt', label: 'felt this', icon: '·' },
+  { key: 'dead', label: 'dead', icon: '💀' },
+  { key: 'rage', label: 'rage', icon: '😤' },
+  { key: 'pain', label: 'pain', icon: '😢' },
+  { key: 'fire', label: 'fire', icon: '🔥' },
+  { key: 'real', label: 'real', icon: '🫂' },
+] as const;
+
+export type ReactionType = typeof REACTION_TYPES[number]['key'];

@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getOrCreateUser } from '@/lib/user';
+import { getOrCreateUser } from '@/lib/auth';
 import ComposeClient from './ComposeClient';
 
 export default async function ComposePage() {

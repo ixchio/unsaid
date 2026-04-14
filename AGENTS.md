@@ -37,7 +37,12 @@ npm run build          # production build
 - `src/lib/darkmode.tsx` — DarkModeProvider context
 - `src/lib/auth.ts` — device-based anonymous auth
 - `src/lib/ably.ts` — Ably client (browser singleton + server REST)
+- `src/lib/seo.ts` — central SEO config (site URL, meta defaults, JSON-LD schemas)
 - `src/app/globals.css` — ALL styles (dark mode vars in `@layer base`)
+- `src/app/opengraph-image.tsx` — dynamic OG image for homepage (edge runtime)
+- `src/app/post/[id]/opengraph-image.tsx` — dynamic OG image per post
+- `src/app/robots.ts` — programmatic robots.txt
+- `src/app/sitemap.ts` — dynamic sitemap with live posts
 
 ## Env Variables
 - `DATABASE_URL` — PostgreSQL connection string
@@ -46,8 +51,23 @@ npm run build          # production build
 - `ABLY_API_KEY` — Ably root key (server publish)
 - `ARCJET_KEY` — Arcjet rate limiting
 - `CLEANUP_SECRET` — Cron cleanup auth
+- `NEXT_PUBLIC_SITE_URL` — canonical site URL (defaults to `https://unsaid-pi.vercel.app`)
+
+## SEO Architecture
+- `src/lib/seo.ts` — single source of truth for site URL, metadata defaults, JSON-LD schemas
+- Root layout exports comprehensive `metadata` with metadataBase, OG, Twitter, robots, keywords
+- Title template: `%s | unsaid` (pages set their own title, root appends brand)
+- Dynamic OG images via `next/og` ImageResponse (edge runtime)
+- Post OG images fetch data from `/api/posts/[id]/og` lightweight endpoint
+- robots.txt blocks /api/, /settings, /compose from crawlers
+- sitemap.xml includes static pages + up to 200 live posts
+- JSON-LD: WebApplication on root, SocialMediaPosting on post detail
+- Security headers in next.config.ts (HSTS, X-Frame-Options, etc.)
+- `X-Powered-By` header removed
+- Private pages (feed, compose) have `robots: { index: false }`
 
 ## Known Patterns
 - All API routes use `request as any` cast for Arcjet typing compatibility
 - Tailwind v4 `@theme` block only for fonts; color vars go in `@layer base`
 - Static pages (settings, verify) use client components; feed/compose use server+client split
+- OG images use edge runtime — cannot import Prisma directly, must fetch from API

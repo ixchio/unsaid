@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getOrCreateUser } from '@/lib/auth';
 import { getAblyServer } from '@/lib/ably';
-import { FELT_HOURLY_LIMIT } from '@/lib/constants';
+import { FELT_HOURLY_LIMIT, POST_FELT_BONUS_MINUTES } from '@/lib/constants';
 import arcjet, { detectBot, tokenBucket } from '@arcjet/next';
 
 const aj = arcjet({
@@ -15,9 +15,9 @@ const aj = arcjet({
     }),
     tokenBucket({
       mode: "LIVE",
-      refillRate: 10,  // 10 requests per minute
+      refillRate: 10,
       interval: 60,
-      capacity: 20,    // short burst allowed
+      capacity: 20,
     }),
   ],
 });
@@ -38,7 +38,6 @@ export async function POST(
     return NextResponse.json({ error: 'Session not found' }, { status: 401 });
   }
 
-  // ── Database Hourly Rate Limit ──
   const oneHourAgo = new Date();
   oneHourAgo.setHours(oneHourAgo.getHours() - 1);
 
@@ -58,16 +57,14 @@ export async function POST(
 
   const { id: postId } = await params;
 
-  // Check if post exists and is not expired
   const post = await prisma.post.findUnique({
     where: { id: postId },
   });
 
   if (!post || post.expiresAt < new Date()) {
-    return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Post not found or expired' }, { status: 404 });
   }
 
-  // Check if already felt
   const existing = await prisma.feltThis.findUnique({
     where: {
       postId_userId: {
@@ -78,34 +75,43 @@ export async function POST(
   });
 
   if (existing) {
-    // Un-felt: remove the felt and decrement count
+    // Un-felt: remove the felt, decrement count, and remove bonus time
+    const newExpiresAt = new Date(post.expiresAt.getTime() - POST_FELT_BONUS_MINUTES * 60000);
+    // Don't let subtraction kill it instantly if we can help it, though it might if they unlike right at the edge.
+    const safeExpiresAt = newExpiresAt < new Date() ? post.expiresAt : newExpiresAt;
+
     await prisma.$transaction([
       prisma.feltThis.delete({
         where: { id: existing.id },
       }),
       prisma.post.update({
         where: { id: postId },
-        data: { feltCount: { decrement: 1 } },
+        data: { 
+          feltCount: { decrement: 1 },
+          expiresAt: safeExpiresAt 
+        },
       }),
     ]);
 
     const updated = await prisma.post.findUnique({
       where: { id: postId },
-      select: { feltCount: true },
+      select: { feltCount: true, expiresAt: true },
     });
 
     const feltCount = updated?.feltCount ?? 0;
+    const currentExpiresAt = updated?.expiresAt.toISOString();
 
-    // Broadcast to all viewers
     const ably = getAblyServer();
     if (ably) {
       const channel = ably.channels.get(`felt:${postId}`);
-      channel.publish('update', { feltCount }).catch(() => {});
+      channel.publish('update', { feltCount, expiresAt: currentExpiresAt }).catch(() => {});
     }
 
-    return NextResponse.json({ felt: false, feltCount });
+    return NextResponse.json({ felt: false, feltCount, expiresAt: currentExpiresAt });
   } else {
-    // Felt: create the felt and increment count
+    // Felt: create the felt, increment count, and ADD bonus time
+    const newExpiresAt = new Date(post.expiresAt.getTime() + POST_FELT_BONUS_MINUTES * 60000);
+
     await prisma.$transaction([
       prisma.feltThis.create({
         data: {
@@ -115,24 +121,27 @@ export async function POST(
       }),
       prisma.post.update({
         where: { id: postId },
-        data: { feltCount: { increment: 1 } },
+        data: { 
+          feltCount: { increment: 1 },
+          expiresAt: newExpiresAt
+        },
       }),
     ]);
 
     const updated = await prisma.post.findUnique({
       where: { id: postId },
-      select: { feltCount: true },
+      select: { feltCount: true, expiresAt: true },
     });
 
     const feltCount = updated?.feltCount ?? 0;
+    const currentExpiresAt = updated?.expiresAt.toISOString();
 
-    // Broadcast to all viewers
     const ably = getAblyServer();
     if (ably) {
       const channel = ably.channels.get(`felt:${postId}`);
-      channel.publish('update', { feltCount }).catch(() => {});
+      channel.publish('update', { feltCount, expiresAt: currentExpiresAt }).catch(() => {});
     }
 
-    return NextResponse.json({ felt: true, feltCount });
+    return NextResponse.json({ felt: true, feltCount, expiresAt: currentExpiresAt });
   }
 }

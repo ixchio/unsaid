@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getOrCreateUser } from '@/lib/auth';
-import { POST_MAX_LENGTH, POST_LIFETIME_HOURS, getCityForLocation, LOCATIONS, DAILY_POST_LIMIT } from '@/lib/constants';
+import { POST_MAX_LENGTH, POST_START_LIFE_MINUTES, LEGEND_THRESHOLD_HOURS, DAILY_POST_LIMIT } from '@/lib/constants';
 import arcjet, { detectBot, tokenBucket } from '@arcjet/next';
 
 const aj = arcjet({
@@ -14,9 +14,9 @@ const aj = arcjet({
     }),
     tokenBucket({
       mode: "LIVE",
-      refillRate: 15, // 15 requests per minute
+      refillRate: 15,
       interval: 60,
-      capacity: 30,   // let them read the feed and post occasionally
+      capacity: 30,
     }),
   ],
 });
@@ -36,12 +36,11 @@ export async function POST(request: Request) {
 
   if (!user.city) {
     return NextResponse.json(
-      { error: 'Please select a city first' },
+      { error: 'Please select an LPU location first' },
       { status: 400 }
     );
   }
 
-  // ── Database Daily Rate Limit ──
   const yesterday = new Date();
   yesterday.setHours(yesterday.getHours() - 24);
 
@@ -76,8 +75,9 @@ export async function POST(request: Request) {
     );
   }
 
+  // ── Survival Mechanics: Initial Life ──
   const expiresAt = new Date();
-  expiresAt.setHours(expiresAt.getHours() + POST_LIFETIME_HOURS);
+  expiresAt.setMinutes(expiresAt.getMinutes() + POST_START_LIFE_MINUTES);
 
   const post = await prisma.post.create({
     data: {
@@ -98,23 +98,19 @@ export async function GET() {
   }
 
   if (!user.city) {
-    return NextResponse.json({ posts: [], national: [], trending: [] });
+    return NextResponse.json({ posts: [], trending: [] });
   }
 
   const now = new Date();
-
-  // Resolve the parent city and get ALL locations in that city group
-  const parentCity = getCityForLocation(user.city);
-  const cityGroup = LOCATIONS.find((g) => g.city === parentCity);
-  const localLocations = cityGroup
-    ? [cityGroup.city, ...cityGroup.universities]
-    : [user.city];
+  const legendThreshold = new Date();
+  legendThreshold.setHours(legendThreshold.getHours() - LEGEND_THRESHOLD_HOURS);
 
   const postSelect = {
     id: true,
     content: true,
     city: true,
     feltCount: true,
+    replyCount: true,
     createdAt: true,
     expiresAt: true,
     feltThis: {
@@ -123,39 +119,25 @@ export async function GET() {
     },
   } as const;
 
-  const [cityPosts, nationalPosts, trending] = await Promise.all([
-    // 1. All posts from user's city group (user's city + all universities in it)
+  const [cityPosts, legends] = await Promise.all([
     prisma.post.findMany({
       where: {
-        city: { in: localLocations },
+        city: user.city,
         expiresAt: { gt: now },
-        feltCount: { lt: 50 },
+        createdAt: { gte: legendThreshold }
       },
       orderBy: { createdAt: 'desc' },
-      take: 30,
+      take: 40,
       select: postSelect,
     }),
 
-    // 2. National — everything OUTSIDE user's city group
-    prisma.post.findMany({
-      where: {
-        city: { notIn: localLocations },
-        expiresAt: { gt: now },
-        feltCount: { lt: 50 },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 30,
-      select: postSelect,
-    }),
-
-    // 3. "Everyone felt this" — 50+ felt, any city
     prisma.post.findMany({
       where: {
         expiresAt: { gt: now },
-        feltCount: { gte: 50 },
+        createdAt: { lt: legendThreshold },
       },
       orderBy: { feltCount: 'desc' },
-      take: 10,
+      take: 20,
       select: postSelect,
     }),
   ]);
@@ -165,6 +147,7 @@ export async function GET() {
     content: post.content,
     city: post.city,
     feltCount: post.feltCount,
+    replyCount: post.replyCount,
     createdAt: post.createdAt.toISOString(),
     expiresAt: post.expiresAt.toISOString(),
     hasFelt: post.feltThis.length > 0,
@@ -172,8 +155,6 @@ export async function GET() {
 
   return NextResponse.json({
     posts: cityPosts.map(formatPost),
-    national: nationalPosts.map(formatPost),
-    trending: trending.map(formatPost),
-    cityLabel: parentCity,
+    trending: legends.map(formatPost),
   });
 }

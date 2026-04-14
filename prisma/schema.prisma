@@ -17,23 +17,26 @@ model User {
 
   posts    Post[]
   feltThis FeltThis[]
+  replies  Reply[]
 
   @@index([deviceId])
   @@index([fingerprint])
 }
 
 model Post {
-  id        String   @id @default(cuid())
-  content   String   @db.VarChar(280)
-  city      String
-  feltCount Int      @default(0)
-  createdAt DateTime @default(now())
-  expiresAt DateTime
+  id         String   @id @default(cuid())
+  content    String   @db.VarChar(280)
+  city       String
+  feltCount  Int      @default(0)
+  replyCount Int      @default(0)
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
 
   authorId String
   author   User   @relation(fields: [authorId], references: [id])
 
   feltThis FeltThis[]
+  replies  Reply[]
 
   @@index([city, createdAt(sort: Desc)])
   @@index([feltCount(sort: Desc)])
@@ -52,4 +55,18 @@ model FeltThis {
 
   @@unique([postId, userId])
   @@index([userId])
+}
+
+model Reply {
+  id        String   @id @default(cuid())
+  content   String   @db.VarChar(200)
+  createdAt DateTime @default(now())
+
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  @@index([postId, createdAt(sort: Desc)])
 }

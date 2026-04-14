@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useTransition } from 'react';
 import Header from '@/components/Header';
-import { LOCATIONS, getCityForLocation } from '@/lib/constants';
+import { LOCATIONS } from '@/lib/constants';
 
 export default function SettingsPage() {
   const [currentLocation, setCurrentLocation] = useState('');
-  const [city, setCity] = useState('');
-  const [university, setUniversity] = useState('');
+  const [groupName, setGroupName] = useState('');
+  const [location, setLocation] = useState('');
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
 
@@ -17,45 +17,44 @@ export default function SettingsPage() {
       .then((data) => {
         if (data.city) {
           setCurrentLocation(data.city);
-          const parentCity = getCityForLocation(data.city);
-          setCity(parentCity);
-          if (data.city !== parentCity) {
-            setUniversity(data.city);
+          // Find the group this location belongs to
+          const group = LOCATIONS.find(g => g.locations.includes(data.city));
+          if (group) {
+            setGroupName(group.groupName);
+            setLocation(data.city);
           }
         }
       });
   }, []);
 
-  const selectedGroup = LOCATIONS.find((g) => g.city === city);
+  const selectedGroup = LOCATIONS.find((g) => g.groupName === groupName);
 
-  function handleCityChange(value: string) {
-    setCity(value);
-    setUniversity('');
+  function handleGroupChange(value: string) {
+    setGroupName(value);
+    setLocation('');
     setSaved(false);
   }
 
   async function handleSaveLocation() {
-    const finalLocation = university || city;
-    if (!finalLocation) return;
+    if (!location) return;
 
     setSaved(false);
     startTransition(async () => {
       const res = await fetch('/api/user/city', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ city: finalLocation }),
+        body: JSON.stringify({ city: location }),
       });
 
       if (res.ok) {
-        setCurrentLocation(finalLocation);
+        setCurrentLocation(location);
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
       }
     });
   }
 
-  const locationChanged =
-    (university || city) !== currentLocation && (university || city) !== '';
+  const locationChanged = location !== '' && location !== currentLocation;
 
   return (
     <div className="page-wrapper">
@@ -68,7 +67,7 @@ export default function SettingsPage() {
 
           {/* Current location */}
           <div className="settings-section">
-            <div className="settings-label">your location</div>
+            <div className="settings-label">your zone</div>
             <div className="settings-row">
               <span className="settings-row-label">current</span>
               <span className="settings-row-value">
@@ -79,10 +78,10 @@ export default function SettingsPage() {
 
           {/* Change location */}
           <div className="settings-section" style={{ borderBottom: 'none' }}>
-            <div className="settings-label">update location</div>
+            <div className="settings-label">update zone</div>
             <p className="settings-hint">
-              change your city or pick a university. your future posts will be
-              tagged with the new location.
+              switch your survival zone. your future posts will be
+              tied to this new location.
             </p>
 
             <div
@@ -95,32 +94,32 @@ export default function SettingsPage() {
             >
               <select
                 className="city-select"
-                value={city}
-                onChange={(e) => handleCityChange(e.target.value)}
+                value={groupName}
+                onChange={(e) => handleGroupChange(e.target.value)}
               >
                 <option value="" disabled>
-                  select city
+                  select category
                 </option>
                 {LOCATIONS.map((g) => (
-                  <option key={g.city} value={g.city}>
-                    {g.city}
+                  <option key={g.groupName} value={g.groupName}>
+                    {g.groupName}
                   </option>
                 ))}
               </select>
 
-              {selectedGroup && selectedGroup.universities.length > 0 && (
+              {selectedGroup && selectedGroup.locations.length > 0 && (
                 <select
                   className="city-select"
-                  value={university}
+                  value={location}
                   onChange={(e) => {
-                    setUniversity(e.target.value);
+                    setLocation(e.target.value);
                     setSaved(false);
                   }}
                 >
-                  <option value="">just {city} is fine</option>
-                  {selectedGroup.universities.map((uni) => (
-                    <option key={uni} value={uni}>
-                      {uni}
+                  <option value="" disabled>select exact zone</option>
+                  {selectedGroup.locations.map((loc) => (
+                    <option key={loc} value={loc}>
+                      {loc}
                     </option>
                   ))}
                 </select>
@@ -144,7 +143,7 @@ export default function SettingsPage() {
                     color: 'var(--color-muted)',
                   }}
                 >
-                  ✓ location updated
+                  ✓ zone updated
                 </span>
               )}
             </div>

@@ -9,12 +9,14 @@ interface FeltButtonProps {
   initialCount: number;
   initialFelt: boolean;
   variant?: 'light' | 'dark';
+  onUpdate?: (newCount: number, newExpiresAt?: string) => void;
 }
 
 export default function FeltButton({
   postId,
   initialCount,
   initialFelt,
+  onUpdate,
 }: FeltButtonProps) {
   const [felt, setFelt] = useState(initialFelt);
   const [count, setCount] = useState(initialCount);
@@ -27,18 +29,21 @@ export default function FeltButton({
 
     const channel = ably.channels.get(`felt:${postId}`);
 
-    const onUpdate = (msg: Ably.InboundMessage) => {
+    const onAblyUpdate = (msg: Ably.InboundMessage) => {
       if (msg.data && typeof msg.data.feltCount === 'number') {
         setCount(msg.data.feltCount);
+        if (onUpdate) {
+          onUpdate(msg.data.feltCount, msg.data.expiresAt);
+        }
       }
     };
 
-    channel.subscribe('update', onUpdate);
+    channel.subscribe('update', onAblyUpdate);
 
     return () => {
-      channel.unsubscribe('update', onUpdate);
+      channel.unsubscribe('update', onAblyUpdate);
     };
-  }, [postId]);
+  }, [postId, onUpdate]);
 
   async function handleFelt() {
     if (isLoading) return;
@@ -59,6 +64,9 @@ export default function FeltButton({
         const data = await res.json();
         setFelt(data.felt);
         setCount(data.feltCount);
+        if (onUpdate && data.expiresAt) {
+          onUpdate(data.feltCount, data.expiresAt);
+        }
       } else {
         setFelt(prevFelt);
         setCount(prevCount);

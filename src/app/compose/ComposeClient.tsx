@@ -3,14 +3,15 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
-import { POST_MAX_LENGTH } from '@/lib/constants';
+import { POST_MAX_LENGTH, POST_START_LIFE_MINUTES } from '@/lib/constants';
 
 const PROMPTS = [
-  'kya chal raha hai actually...',
-  'the thing you didn\'t say today...',
-  'what kept you up last night...',
-  'what you wish someone knew...',
+  'that thing about your hostel nobody says...',
+  'the truth about today\'s lecture...',
+  'what really happened in the food court...',
   'the text you typed and deleted...',
+  'what you wish your roommate knew...',
+  'the real reason you skipped class...',
 ];
 
 export default function ComposeClient() {
@@ -54,7 +55,19 @@ export default function ComposeClient() {
         <div />
 
         <div className="compose-main">
-          <div className="compose-prompt">what actually happened today</div>
+          <div className="compose-prompt">
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: '#dc2626',
+                display: 'inline-block',
+                animation: 'textPulse 1s ease-in-out infinite',
+              }} />
+              this post gets {POST_START_LIFE_MINUTES} minutes. make it count.
+            </span>
+          </div>
 
           <div style={{ borderBottom: '1px solid var(--color-border)' }}>
             <textarea
@@ -102,7 +115,7 @@ export default function ComposeClient() {
               }
               style={{ opacity: content.trim() ? 1 : 0.3 }}
             >
-              {isPending ? '...' : 'post it'}
+              {isPending ? '...' : 'drop it'}
             </button>
           </div>
 
@@ -121,8 +134,8 @@ export default function ComposeClient() {
               </svg>
             </div>
             <span>
-              <strong>posting as nobody.</strong> your name, email, nothing —
-              attached to this.
+              <strong>posting as nobody.</strong> anonymous. no trace.
+              if it resonates — people keep it alive. if not — gone in {POST_START_LIFE_MINUTES}m.
             </span>
           </div>
         </div>

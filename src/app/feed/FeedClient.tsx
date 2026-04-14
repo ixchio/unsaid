@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import PostCard, { PostData } from '@/components/PostCard';
 import Header from '@/components/Header';
 import Link from 'next/link';
 
 export default function FeedClient({ userCity }: { userCity: string }) {
   const [posts, setPosts] = useState<PostData[]>([]);
-  const [national, setNational] = useState<PostData[]>([]);
   const [trending, setTrending] = useState<PostData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dyingCount, setDyingCount] = useState(0);
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -18,7 +18,6 @@ export default function FeedClient({ userCity }: { userCity: string }) {
       if (res.ok) {
         const data = await res.json();
         setPosts(data.posts || []);
-        setNational(data.national || []);
         setTrending(data.trending || []);
       }
     } catch (e) {
@@ -34,11 +33,39 @@ export default function FeedClient({ userCity }: { userCity: string }) {
     return () => clearInterval(interval);
   }, [fetchPosts]);
 
-  const hasAnyPosts = posts.length > 0 || national.length > 0 || trending.length > 0;
+  // Track dying posts every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const dying = posts.filter(p => {
+        const remaining = new Date(p.expiresAt).getTime() - now;
+        return remaining > 0 && remaining < 5 * 60 * 1000;
+      });
+      setDyingCount(dying.length);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [posts]);
+
+  const hasAnyPosts = posts.length > 0 || trending.length > 0;
 
   return (
     <div className="page-wrapper">
       <Header city={userCity} />
+
+      {/* Dying posts alert banner */}
+      <AnimatePresence>
+        {dyingCount > 0 && (
+          <motion.div
+            className="dying-banner"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+          >
+            <span className="dying-banner-dot" />
+            {dyingCount} {dyingCount === 1 ? 'post is' : 'posts are'} about to die — keep them alive
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="feed-layout">
         <div className="feed-sidebar-left" />
@@ -55,12 +82,11 @@ export default function FeedClient({ userCity }: { userCity: string }) {
               <p>
                 nothing here yet.
                 <br />
-                be the first to say the unsaid thing.
+                be the first to drop something in this zone.
               </p>
             </div>
           ) : (
             <>
-              {/* Your city posts */}
               {posts.length > 0 && (
                 <div>
                   <div className="thread-label" style={{ color: 'var(--color-muted)', paddingBottom: '0.5rem' }}>
@@ -73,7 +99,7 @@ export default function FeedClient({ userCity }: { userCity: string }) {
                         flexShrink: 0,
                       }}
                     />
-                    {userCity.toLowerCase()}
+                    {userCity.toLowerCase()} — survival zone
                   </div>
                   <AnimatePresence mode="popLayout">
                     {posts.map((post) => (
@@ -83,30 +109,6 @@ export default function FeedClient({ userCity }: { userCity: string }) {
                 </div>
               )}
 
-              {/* National — posts from all other cities */}
-              {national.length > 0 && (
-                <div>
-                  <div className="thread-label" style={{ color: 'var(--color-muted)', paddingTop: '1.5rem', paddingBottom: '0.5rem' }}>
-                    <span
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: 'var(--color-muted)',
-                        flexShrink: 0,
-                      }}
-                    />
-                    across india
-                  </div>
-                  <AnimatePresence mode="popLayout">
-                    {national.map((post) => (
-                      <PostCard key={post.id} post={post} />
-                    ))}
-                  </AnimatePresence>
-                </div>
-              )}
-
-              {/* Everyone felt this — the black zone */}
               {trending.length > 0 && (
                 <div className="city-thread">
                   <div
@@ -122,7 +124,7 @@ export default function FeedClient({ userCity }: { userCity: string }) {
                         flexShrink: 0,
                       }}
                     />
-                    everyone felt this
+                    campus legends
                   </div>
 
                   <AnimatePresence mode="popLayout">
@@ -139,7 +141,6 @@ export default function FeedClient({ userCity }: { userCity: string }) {
         <div className="feed-sidebar-right" />
       </div>
 
-      {/* Compose FAB */}
       <Link href="/compose" className="compose-fab" aria-label="Write something">
         +
       </Link>

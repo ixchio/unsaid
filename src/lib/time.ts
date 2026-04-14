@@ -6,9 +6,21 @@ export function timeLeft(expiresAt: Date): string {
 
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-  if (hours > 0) return `${hours}h left`;
-  return `${minutes}m left`;
+  if (hours > 0) {
+    if (minutes > 0) return `${hours}h ${minutes}m left`;
+    return `${hours}h left`;
+  }
+  
+  if (minutes >= 5) {
+    return `${minutes}m left`;
+  }
+  
+  // Under 5 minutes: Intense mode
+  const ms = minutes.toString().padStart(2, '0');
+  const ss = seconds.toString().padStart(2, '0');
+  return `${ms}:${ss} left`;
 }
 
 /** Format a Date as relative time for display */

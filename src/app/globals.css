@@ -78,7 +78,7 @@ body {
   border-bottom: 1px solid var(--color-border);
   position: sticky;
   top: 0;
-  background: rgba(255,255,255,0.92);
+  background: var(--color-header-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 100;
@@ -153,14 +153,14 @@ body {
   font-weight: 500;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: #fff;
-  background: #111;
+  color: var(--color-bg);
+  background: var(--color-text);
   text-decoration: none;
   transition: all 0.2s ease;
 }
 
 .btn-primary:hover {
-  background: #333;
+  opacity: 0.85;
 }
 
 /* Pitch section */
@@ -394,7 +394,7 @@ body {
 }
 
 .post-card:hover {
-  background: #fafafa;
+  background: var(--color-card-hover);
 }
 
 .post-card:last-child {
@@ -729,7 +729,7 @@ body {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, var(--color-border) 25%, #f5f5f5 50%, var(--color-border) 75%);
+  background: linear-gradient(90deg, var(--color-skeleton-a) 25%, var(--color-skeleton-b) 50%, var(--color-skeleton-a) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 2px;
@@ -1167,4 +1167,505 @@ body {
 .city-thread .reply-loading,
 .city-thread .reply-empty {
   color: rgba(255,255,255,0.3);
+}
+
+/* ───── Survival Bar ───── */
+.survival-bar-track {
+  width: 100%;
+  height: 2px;
+  background: var(--color-border);
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.survival-bar-fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.5s ease-out;
+}
+
+/* ───── Post Bottom Row / Actions ───── */
+.post-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.post-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.bonus-float {
+  position: absolute;
+  right: 0;
+  top: -1.2rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #22c55e;
+  pointer-events: none;
+  letter-spacing: 0.02em;
+}
+
+.own-badge {
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  border: 1px solid var(--color-border);
+  padding: 0.1rem 0.35rem;
+}
+
+/* ───── Search Bar ───── */
+.search-bar-wrap {
+  position: relative;
+}
+
+.search-trigger {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: color 0.15s ease;
+}
+
+.search-trigger:hover {
+  color: var(--color-text);
+}
+
+.search-trigger.active {
+  color: var(--color-text);
+}
+
+.search-active-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #dc2626;
+}
+
+.search-panel {
+  overflow: hidden;
+  padding: 1rem 2.5rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.search-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: var(--color-text);
+  background: transparent;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--color-border);
+  transition: border-color 0.15s ease;
+}
+
+.search-input:focus {
+  border-color: var(--color-text);
+}
+
+.search-input::placeholder {
+  color: var(--color-muted);
+}
+
+.search-clear {
+  background: none;
+  border: none;
+  padding: 0.2rem 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.search-clear:hover {
+  color: var(--color-text);
+}
+
+.search-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.search-select {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 0;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.search-select:focus {
+  border-color: var(--color-text);
+}
+
+.search-sort-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--color-border);
+}
+
+.search-sort-btn {
+  background: none;
+  border: none;
+  border-right: 1px solid var(--color-border);
+  padding: 0.3rem 0.65rem;
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.search-sort-btn:last-child {
+  border-right: none;
+}
+
+.search-sort-btn:hover {
+  color: var(--color-text);
+}
+
+.search-sort-btn.active {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+.search-zone-quick {
+  background: none;
+  border: 1px solid var(--color-border);
+  padding: 0.25rem 0.6rem;
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  align-self: flex-start;
+}
+
+.search-zone-quick:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+/* ───── Reaction Picker ───── */
+.reaction-picker-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.reaction-icon {
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.reaction-breakdown {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.reaction-badge {
+  font-size: 0.6rem;
+  color: var(--color-muted);
+  letter-spacing: 0.02em;
+}
+
+.reaction-panel {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  display: flex;
+  gap: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  z-index: 20;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.reaction-panel.dark {
+  background: #1a1a1a;
+  border-color: rgba(255,255,255,0.12);
+}
+
+.reaction-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.5rem 0.6rem;
+  background: none;
+  border: none;
+  border-right: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.reaction-option:last-child {
+  border-right: none;
+}
+
+.reaction-option:hover {
+  background: var(--color-overlay);
+}
+
+.reaction-option.active {
+  background: var(--color-text);
+}
+
+.reaction-option.active .reaction-option-label {
+  color: var(--color-bg);
+}
+
+.reaction-option-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.reaction-option-label {
+  font-size: 0.5rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  color: var(--color-muted);
+}
+
+/* ───── Share Button ───── */
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--color-border);
+  padding: 0.35rem 0.55rem;
+  cursor: pointer;
+  color: var(--color-muted);
+  transition: all 0.15s ease;
+  border-radius: 0;
+}
+
+.share-btn:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.share-check {
+  font-size: 0.7rem;
+  color: #22c55e;
+}
+
+/* ───── Offline Banner ───── */
+.offline-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #7f1d1d;
+  color: rgba(255,255,255,0.85);
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  overflow: hidden;
+}
+
+.offline-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f87171;
+  flex-shrink: 0;
+  animation: textPulse 1.5s ease-in-out infinite;
+}
+
+.offline-count {
+  padding: 0.1rem 0.4rem;
+  background: rgba(255,255,255,0.1);
+  font-size: 0.6rem;
+}
+
+.online-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  background: #14532d;
+  color: rgba(255,255,255,0.85);
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  overflow: hidden;
+}
+
+/* ───── Stats Panel (Settings) ───── */
+.stats-panel {
+  padding: 0;
+}
+
+.stats-panel-title {
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  margin-bottom: 0.35rem;
+}
+
+.stats-panel-subtitle {
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--color-muted);
+  margin-bottom: 1.5rem;
+}
+
+.stats-panel-loading {
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--color-muted);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 1px solid var(--color-border);
+  margin-bottom: 1rem;
+}
+
+.stats-grid-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+}
+
+.stats-grid-item:nth-child(2n) {
+  border-right: none;
+}
+
+.stats-grid-item:nth-last-child(-n+2) {
+  border-bottom: none;
+}
+
+.stats-grid-value {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.stats-grid-label {
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.stats-vibe,
+.stats-record {
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--color-muted);
+  margin-bottom: 0.35rem;
+}
+
+.stats-vibe strong,
+.stats-record strong {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+/* ───── Header icon buttons reset ───── */
+.header-icon {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+button.header-icon {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* ───── Scroll Sentinel / Loading More ───── */
+.scroll-sentinel {
+  padding: 1rem 2.5rem;
+}
+
+.loading-more {
+  padding: 1rem 0;
+}
+
+/* ───── Mobile: search panel ───── */
+@media (max-width: 640px) {
+  .search-panel {
+    padding: 0.75rem 1.5rem;
+  }
+
+  .reaction-panel {
+    left: auto;
+    right: 0;
+  }
+
+  .scroll-sentinel {
+    padding: 1rem 1.5rem;
+  }
 }

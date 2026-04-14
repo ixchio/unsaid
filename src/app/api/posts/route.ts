@@ -122,7 +122,6 @@ export async function GET() {
   const [cityPosts, legends] = await Promise.all([
     prisma.post.findMany({
       where: {
-        city: user.city,
         expiresAt: { gt: now },
         createdAt: { gte: legendThreshold }
       },

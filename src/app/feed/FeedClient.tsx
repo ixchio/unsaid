@@ -80,9 +80,9 @@ export default function FeedClient({ userCity }: { userCity: string }) {
           ) : !hasAnyPosts ? (
             <div className="empty-state">
               <p>
-                nothing here yet.
+                nobody gives a fuck yet.
                 <br />
-                be the first to drop something in this zone.
+                drop something and start the clock.
               </p>
             </div>
           ) : (
@@ -99,7 +99,7 @@ export default function FeedClient({ userCity }: { userCity: string }) {
                         flexShrink: 0,
                       }}
                     />
-                    {userCity.toLowerCase()} — survival zone
+                    lpu campus — survival feed
                   </div>
                   <AnimatePresence mode="popLayout">
                     {posts.map((post) => (

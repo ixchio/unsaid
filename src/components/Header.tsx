@@ -23,7 +23,6 @@ export default function Header({ city, rightAction = 'city' }: HeaderProps) {
           className="header-icon"
           onClick={toggle}
           aria-label={`Switch to ${resolved === 'dark' ? 'light' : 'dark'} mode`}
-          title={resolved === 'dark' ? 'light mode' : 'dark mode'}
         >
           {resolved === 'dark' ? (
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

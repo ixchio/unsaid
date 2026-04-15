@@ -220,29 +220,45 @@ export default function FeedClient({ userCity }: { userCity: string }) {
               </div>
             ) : (
               <>
-                {posts.length > 0 && (
-                  <div>
-                    <div className="thread-label" style={{ color: 'var(--color-muted)', paddingBottom: '0.5rem' }}>
-                      <span className="thread-dot" />
-                      {isSearching ? 'search results' : 'lpu campus — survival feed'}
-                    </div>
-                    <AnimatePresence mode="popLayout">
-                      {posts.map((post) => (
-                        <PostCard key={post.id} post={post} />
-                      ))}
-                    </AnimatePresence>
+                {/* Survival feed — always visible */}
+                <div>
+                  <div className="thread-label" style={{ color: 'var(--color-muted)', paddingBottom: '0.5rem' }}>
+                    <span className="thread-dot" />
+                    {isSearching ? 'search results' : 'lpu campus — survival feed'}
+                  </div>
 
-                    {/* infinite scroll sentinel */}
-                    <div ref={sentinelRef} className="scroll-sentinel">
-                      {loadingMore && (
-                        <div className="loading-more">
-                          <div className="skeleton" style={{ height: 12, width: '50%', margin: '0 auto' }} />
-                        </div>
+                  {posts.length > 0 ? (
+                    <>
+                      <AnimatePresence mode="popLayout">
+                        {posts.map((post) => (
+                          <PostCard key={post.id} post={post} />
+                        ))}
+                      </AnimatePresence>
+
+                      {/* infinite scroll sentinel */}
+                      <div ref={sentinelRef} className="scroll-sentinel">
+                        {loadingMore && (
+                          <div className="loading-more">
+                            <div className="skeleton" style={{ height: 12, width: '50%', margin: '0 auto' }} />
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="feed-empty-state">
+                      <p className="feed-empty-text">
+                        {isSearching ? 'nothing matches your filters.' : 'the feed is quiet right now.'}
+                      </p>
+                      {!isSearching && (
+                        <Link href="/compose" className="feed-empty-cta">
+                          break the silence
+                        </Link>
                       )}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
+                {/* Campus legends */}
                 {trending.length > 0 && !isSearching && (
                   <div className="city-thread">
                     <div className="thread-label" style={{ color: 'rgba(255,255,255,0.5)' }}>

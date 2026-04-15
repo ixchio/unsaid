@@ -71,3 +71,20 @@ npm run build          # production build
 - Tailwind v4 `@theme` block only for fonts; color vars go in `@layer base`
 - Static pages (settings, verify) use client components; feed/compose use server+client split
 - OG images use edge runtime — cannot import Prisma directly, must fetch from API
+- Zone picker uses full-screen overlay instead of dropdown (avoids overflow:hidden clipping)
+- Arcjet detectBot is DRY_RUN across all routes (was blocking real users in LIVE mode)
+
+## Known Issues (as of April 2026)
+### Critical
+- **Ably server creates new REST client on every request** — `getAblyServer()` instantiates `new Ably.Rest()` per call instead of reusing a singleton
+- **No try-catch in felt/route.ts and replies/route.ts** — Prisma errors produce unhandled 500s
+- **Cleanup cron runs once/day** — Posts expire in 60min but dead posts accumulate until midnight cleanup
+- **Landing page DB queries on every SSR** — No caching/ISR for `getStats()` which runs 3 queries per load
+- **Race condition in reaction toggle** — read-then-write pattern on feltCount can double-increment
+
+### Moderate
+- **FingerprintJS lookup is a session hijack vector** — `findFirst({ fingerprint })` lets anyone who knows a fingerprint impersonate that user
+- **No content moderation** — No profanity filter, spam detection, or report mechanism
+- **Reply thread has no pagination** — Capped at 50 with no load-more
+- **Post detail page has no auth** — Anyone with a post ID sees full content (breaks anonymity promise for shared links)
+- **Trending score recalculated on every GET** — Should be cached or precomputed

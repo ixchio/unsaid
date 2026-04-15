@@ -15,33 +15,42 @@ const SORT_OPTIONS = [
   { key: 'dying', label: 'dying' },
 ] as const;
 
-const ALL_ZONES = LOCATIONS.flatMap(g => g.locations);
-
 export default function SearchBar({ onSearch, currentZone }: SearchBarProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [zone, setZone] = useState('');
   const [sort, setSort] = useState('recent');
-  const [zoneOpen, setZoneOpen] = useState(false);
+  const [zonePicker, setZonePicker] = useState(false);
+  const [zoneSearch, setZoneSearch] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const zoneSearchRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
-  const zoneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  // close zone dropdown on outside click
+  // focus zone search when picker opens
   useEffect(() => {
-    if (!zoneOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (zoneRef.current && !zoneRef.current.contains(e.target as Node)) {
-        setZoneOpen(false);
-      }
+    if (zonePicker) {
+      setTimeout(() => zoneSearchRef.current?.focus(), 50);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      setZoneSearch('');
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [zonePicker]);
+
+  // escape key closes zone picker
+  useEffect(() => {
+    if (!zonePicker) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setZonePicker(false);
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [zoneOpen]);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [zonePicker]);
 
   function handleQueryChange(val: string) {
     setQuery(val);
@@ -53,7 +62,7 @@ export default function SearchBar({ onSearch, currentZone }: SearchBarProps) {
 
   function handleZoneChange(val: string) {
     setZone(val);
-    setZoneOpen(false);
+    setZonePicker(false);
     onSearch(query, val, sort);
   }
 
@@ -71,117 +80,188 @@ export default function SearchBar({ onSearch, currentZone }: SearchBarProps) {
   }
 
   const hasFilters = query || zone || sort !== 'recent';
+  const lowerSearch = zoneSearch.toLowerCase();
+
+  // filter locations by zone search query
+  const filteredGroups = LOCATIONS.map(g => ({
+    ...g,
+    locations: g.locations.filter(l => l.toLowerCase().includes(lowerSearch)),
+  })).filter(g => g.locations.length > 0);
 
   return (
-    <div className="search-bar-wrap">
-      {/* collapsed: just a subtle trigger row */}
-      <button
-        className="search-trigger-bar"
-        onClick={() => setOpen(!open)}
-        aria-label="Search and filter"
-      >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <span>{hasFilters ? (zone || query || sort !== 'recent' ? 'filtered' : 'search') : 'search & filter'}</span>
-        {hasFilters && <span className="search-active-dot" />}
-      </button>
+    <>
+      <div className="search-bar-wrap">
+        {/* collapsed trigger */}
+        <button
+          className="search-trigger-bar"
+          onClick={() => setOpen(!open)}
+          aria-label="Search and filter"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <span>{hasFilters ? 'filtered' : 'search & filter'}</span>
+          {hasFilters && <span className="search-active-dot" />}
+        </button>
 
-      {/* expanded panel */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            className="search-panel"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-          >
-            {/* search input */}
-            <div className="search-input-row">
-              <input
-                ref={inputRef}
-                type="text"
-                className="search-input"
-                value={query}
-                onChange={(e) => handleQueryChange(e.target.value)}
-                placeholder="search posts..."
-                autoComplete="off"
-              />
-              {hasFilters && (
-                <button className="search-clear" onClick={handleClear}>clear</button>
-              )}
-            </div>
+        {/* expanded panel */}
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              className="search-panel"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.12 }}
+            >
+              {/* search input */}
+              <div className="search-input-row">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  className="search-input"
+                  value={query}
+                  onChange={(e) => handleQueryChange(e.target.value)}
+                  placeholder="search posts..."
+                  autoComplete="off"
+                />
+                {hasFilters && (
+                  <button className="search-clear" onClick={handleClear}>clear</button>
+                )}
+              </div>
 
-            {/* filters row */}
-            <div className="search-filters">
-              {/* custom zone dropdown */}
-              <div className="zone-dropdown" ref={zoneRef}>
+              {/* filters row */}
+              <div className="search-filters">
+                {/* zone chip — opens full overlay picker */}
                 <button
-                  className="zone-dropdown-trigger"
-                  onClick={() => setZoneOpen(!zoneOpen)}
+                  className={`zone-chip ${zone ? 'active' : ''}`}
+                  onClick={() => setZonePicker(true)}
                 >
-                  <span>{zone || 'all zones'}</span>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="6 9 12 15 18 9" />
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
                   </svg>
+                  <span>{zone || 'all zones'}</span>
+                  {zone && (
+                    <span
+                      className="zone-chip-clear"
+                      onClick={(e) => { e.stopPropagation(); handleZoneChange(''); }}
+                    >
+                      ×
+                    </span>
+                  )}
                 </button>
 
-                <AnimatePresence>
-                  {zoneOpen && (
-                    <motion.div
-                      className="zone-dropdown-menu"
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.12 }}
+                {/* sort buttons */}
+                <div className="search-sort-group">
+                  {SORT_OPTIONS.map((s) => (
+                    <button
+                      key={s.key}
+                      className={`search-sort-btn ${sort === s.key ? 'active' : ''}`}
+                      onClick={() => handleSortChange(s.key)}
                     >
-                      <button
-                        className={`zone-dropdown-item ${!zone ? 'active' : ''}`}
-                        onClick={() => handleZoneChange('')}
-                      >
-                        all zones
-                      </button>
-                      {currentZone && (
-                        <button
-                          className={`zone-dropdown-item highlight ${zone === currentZone ? 'active' : ''}`}
-                          onClick={() => handleZoneChange(currentZone)}
-                        >
-                          {currentZone} <span className="zone-you">· you</span>
-                        </button>
-                      )}
-                      <div className="zone-dropdown-divider" />
-                      {ALL_ZONES.map((z) => (
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* zone picker overlay — renders at portal level, no overflow clipping */}
+      <AnimatePresence>
+        {zonePicker && (
+          <motion.div
+            className="zone-picker-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            <motion.div
+              className="zone-picker"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              {/* header */}
+              <div className="zone-picker-header">
+                <span className="zone-picker-title">pick a zone</span>
+                <button
+                  className="zone-picker-close"
+                  onClick={() => setZonePicker(false)}
+                >
+                  esc
+                </button>
+              </div>
+
+              {/* search within zones */}
+              <div className="zone-picker-search">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  ref={zoneSearchRef}
+                  type="text"
+                  value={zoneSearch}
+                  onChange={(e) => setZoneSearch(e.target.value)}
+                  placeholder="search zones..."
+                  autoComplete="off"
+                />
+              </div>
+
+              {/* zone list */}
+              <div className="zone-picker-list">
+                {/* "all zones" option */}
+                <button
+                  className={`zone-picker-item all ${!zone ? 'active' : ''}`}
+                  onClick={() => handleZoneChange('')}
+                >
+                  all zones
+                </button>
+
+                {/* current zone shortcut */}
+                {currentZone && !zoneSearch && (
+                  <button
+                    className={`zone-picker-item yours ${zone === currentZone ? 'active' : ''}`}
+                    onClick={() => handleZoneChange(currentZone)}
+                  >
+                    {currentZone}
+                    <span className="zone-picker-badge">your zone</span>
+                  </button>
+                )}
+
+                {/* grouped zones */}
+                {filteredGroups.map((group) => (
+                  <div key={group.groupName} className="zone-picker-group">
+                    <div className="zone-picker-group-label">{group.groupName}</div>
+                    <div className="zone-picker-group-items">
+                      {group.locations.map((z) => (
                         <button
                           key={z}
-                          className={`zone-dropdown-item ${zone === z ? 'active' : ''}`}
+                          className={`zone-picker-item ${zone === z ? 'active' : ''}`}
                           onClick={() => handleZoneChange(z)}
                         >
                           {z}
                         </button>
                       ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* sort buttons */}
-              <div className="search-sort-group">
-                {SORT_OPTIONS.map((s) => (
-                  <button
-                    key={s.key}
-                    className={`search-sort-btn ${sort === s.key ? 'active' : ''}`}
-                    onClick={() => handleSortChange(s.key)}
-                  >
-                    {s.label}
-                  </button>
+                    </div>
+                  </div>
                 ))}
+
+                {filteredGroups.length === 0 && (
+                  <div className="zone-picker-empty">no zones match "{zoneSearch}"</div>
+                )}
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }

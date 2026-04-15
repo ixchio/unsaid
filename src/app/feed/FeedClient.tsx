@@ -19,6 +19,7 @@ export default function FeedClient({ userCity }: { userCity: string }) {
   const [hasMore, setHasMore] = useState(false);
   const [trendingHasMore, setTrendingHasMore] = useState(false);
   const [dyingCount, setDyingCount] = useState(0);
+  const [feedError, setFeedError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchZone, setSearchZone] = useState('');
   const [searchSort, setSearchSort] = useState('recent');
@@ -36,6 +37,7 @@ export default function FeedClient({ userCity }: { userCity: string }) {
 
   const fetchPosts = useCallback(async (append = false, cursor?: string) => {
     if (append) setLoadingMore(true);
+    else setFeedError('');
     try {
       const res = await fetch(buildUrl(cursor));
       if (res.ok) {
@@ -48,9 +50,15 @@ export default function FeedClient({ userCity }: { userCity: string }) {
           setTrendingHasMore(data.trendingHasMore || false);
         }
         setHasMore(data.hasMore || false);
+        setFeedError('');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        console.error('Feed API error:', res.status, data);
+        if (!append) setFeedError(data.error || 'failed to load feed.');
       }
     } catch (e) {
       console.error('Failed to fetch posts:', e);
+      if (!append) setFeedError('network error. check your connection.');
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -190,6 +198,17 @@ export default function FeedClient({ userCity }: { userCity: string }) {
                 <div className="skeleton" style={{ height: 16, width: '80%', margin: '0 auto 12px' }} />
                 <div className="skeleton" style={{ height: 16, width: '60%', margin: '0 auto 12px' }} />
                 <div className="skeleton" style={{ height: 16, width: '40%', margin: '0 auto' }} />
+              </div>
+            ) : feedError ? (
+              <div className="empty-state">
+                <p style={{ color: '#f87171' }}>{feedError}</p>
+                <button
+                  className="btn-ghost"
+                  style={{ marginTop: '1rem' }}
+                  onClick={() => { setLoading(true); fetchPosts(); }}
+                >
+                  try again
+                </button>
               </div>
             ) : !hasAnyPosts ? (
               <div className="empty-state">

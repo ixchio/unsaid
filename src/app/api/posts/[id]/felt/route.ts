@@ -12,7 +12,7 @@ const aj = arcjet({
   characteristics: ['ip.src'],
   rules: [
     detectBot({
-      mode: "LIVE",
+      mode: "DRY_RUN",
       allow: ["CATEGORY:SEARCH_ENGINE"],
     }),
     tokenBucket({

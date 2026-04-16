@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma';
 
 // One-time migration: extend all existing posts to createdAt + 48 hours
 export async function GET(request: Request) {
-  const secret = new URL(request.url).searchParams.get('secret');
+  const secret = new URL(request.url).searchParams.get('secret')
+    || process.env.CLEANUP_SECRET; // auto-auth on Vercel
   if (secret !== process.env.CLEANUP_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

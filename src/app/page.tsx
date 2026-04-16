@@ -116,7 +116,7 @@ export default async function LandingPage() {
         <p className="hero-subtitle">
           no name. no face. no account. no consequences.
           <br />
-          say whatever you want. it dies in 60 minutes anyway.
+          say whatever you want. it dies in 48 hours anyway.
         </p>
         <Link href="/verify" className="btn-ghost">
           start talking
@@ -128,7 +128,7 @@ export default async function LandingPage() {
         <div className="pitch-lines">
           <div className="pitch-line">
             <span className="pitch-dot" />
-            your post gets 60 minutes to live. then it&apos;s gone.
+            your post gets 48 hours to live. then it&apos;s gone.
           </div>
           <div className="pitch-line">
             <span className="pitch-dot" />

@@ -113,7 +113,7 @@ export function getCityForLocation(location: string): string {
 }
 
 // ── Survival Mechanics ──
-export const POST_START_LIFE_MINUTES = 60;
+export const POST_START_LIFE_MINUTES = 2880; // 48 hours
 export const POST_FELT_BONUS_MINUTES = 10;
 export const LEGEND_THRESHOLD_HOURS = 24;
 

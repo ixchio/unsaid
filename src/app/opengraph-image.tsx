@@ -71,7 +71,7 @@ export default function OgImage() {
           <span style={{ color: '#333' }}>·</span>
           <span>ephemeral</span>
           <span style={{ color: '#333' }}>·</span>
-          <span>60 minutes</span>
+          <span>48 hours</span>
           <span style={{ color: '#333' }}>·</span>
           <span>zero trace</span>
         </div>

@@ -5,7 +5,7 @@ import ComposeClient from './ComposeClient';
 
 export const metadata: Metadata = {
   title: 'drop something',
-  description: 'say the thing you didn\'t. anonymous. ephemeral. gone in 60 minutes.',
+  description: 'say the thing you didn\'t. anonymous. ephemeral. gone in 48 hours.',
   robots: { index: false, follow: false },
 };
 

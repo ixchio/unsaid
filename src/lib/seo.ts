@@ -4,9 +4,9 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://unsaid-pi.v
 export const SITE_NAME = 'unsaid';
 export const SITE_TAGLINE = "say the thing you didn't";
 export const SITE_DESCRIPTION =
-  'anonymous. ephemeral. gone in 60 minutes. no profile. no history. just raw, unfiltered campus truth from LPU.';
+  'anonymous. ephemeral. gone in 48 hours. no profile. no history. just raw, unfiltered campus truth from LPU.';
 export const SITE_DESCRIPTION_LONG =
-  'unsaid is an anonymous expression platform for LPU campus. post anything — no name, no face, no account. your post gets 60 minutes to live. if people feel it, it survives. if not, it dies. zero trace.';
+  'unsaid is an anonymous expression platform for LPU campus. post anything — no name, no face, no account. your post gets 48 hours to live. if people feel it, it survives. if not, it dies. zero trace.';
 
 export const OG_DEFAULTS = {
   siteName: SITE_NAME,
